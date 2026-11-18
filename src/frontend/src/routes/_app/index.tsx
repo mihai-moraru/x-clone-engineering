@@ -6,6 +6,7 @@ import { seo } from "@/lib/seo"
 import { timelineQueryOptions } from "@/queries/tweets"
 import { Button } from "@/components/ui/button"
 import { TweetCard } from "@/components/tweet-card"
+import { TweetComposer } from "@/components/tweet-composer"
 
 export const Route = createFileRoute("/_app/")({
   head: () => ({
@@ -55,6 +56,8 @@ function Home() {
       <h1 className="border-b border-border px-4 pb-3 text-xl font-bold text-foreground">
         Home
       </h1>
+
+      <TweetComposer />
 
       {status === "pending" ? (
         <p role="status" className="px-4 py-8 text-center text-sm text-muted-foreground">
