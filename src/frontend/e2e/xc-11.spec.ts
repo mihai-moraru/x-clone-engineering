@@ -1,4 +1,4 @@
-import type { Locator, Page, Route } from "@playwright/test"
+import type { Locator, Page, Response as PlaywrightResponse, Route } from "@playwright/test"
 
 import { expect, test } from "./fixtures"
 
@@ -138,7 +138,13 @@ test("AC1: tapping retweet once retweets the tweet; tapping again undoes it", as
     expect(calls).toEqual([])
   })
 
+  let retweetSaved: Promise<PlaywrightResponse> | undefined
+
   await evidence.step("Tap retweet once: the tweet is retweeted and has 4 retweets", async () => {
+    // Start listening for the answer before the tap, so the next step can wait for it.
+    retweetSaved = page.waitForResponse(
+      (response) => response.url().includes("/retweet") && response.request().method() === "POST"
+    )
     await retweet.click()
     await expect(retweet).toHaveAttribute("aria-pressed", "true")
     await expect(retweet).toHaveText("4")
@@ -146,6 +152,7 @@ test("AC1: tapping retweet once retweets the tweet; tapping again undoes it", as
   })
 
   await evidence.step("It stays retweeted once the answer has come back", async () => {
+    await retweetSaved
     await expect(retweet).toHaveAttribute("aria-pressed", "true")
     await expect(retweet).toHaveText("4")
   })
@@ -221,32 +228,50 @@ test("AC2: the retweet count and the button state update immediately, even on a 
 
 test("AC3: if saving my retweet fails, the count goes back and I see a message", async ({ page, evidence }) => {
   await serveTimeline(page, [target, neighbour])
-  // Saving fails: the server answers 500.
+  // Saving fails: the server answers 500, but the failing answer is held back until the test lets it go.
+  let release: () => void = () => undefined
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
   const { calls } = await serveRetweets(page, [target, neighbour], async (route) => {
+    await held
     await route.fulfill({ status: 500, json: { error: "Internal Server Error" } })
   })
   const retweet = retweetButtonOf(page, target)
 
-  await evidence.step("Open the home timeline: the tweet has 3 retweets and I have not retweeted it", async () => {
-    await openTimeline(page)
-    await expect(retweet).toHaveAttribute("aria-pressed", "false")
-    await expect(retweet).toHaveText("3")
-  })
+  try {
+    await evidence.step("Open the home timeline: the tweet has 3 retweets and I have not retweeted it", async () => {
+      await openTimeline(page)
+      await expect(retweet).toHaveAttribute("aria-pressed", "false")
+      await expect(retweet).toHaveText("3")
+    })
 
-  await evidence.step("Tap retweet while the server is failing: a message says it was not saved", async () => {
-    await retweet.click()
-    await expect.poll(() => calls).toEqual([{ method: "POST", tweetId: TWEET_ID }])
-    await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).toBeVisible()
-  })
+    await evidence.step("Tap retweet while the server is failing: it shows as retweeted with 4 before the answer", async () => {
+      await retweet.click()
+      // The request has been sent and its failing answer is held in this test.
+      await expect.poll(() => calls).toEqual([{ method: "POST", tweetId: TWEET_ID }])
+      await expect(retweet).toHaveAttribute("aria-pressed", "true")
+      await expect(retweet).toHaveText("4")
+      await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).not.toBeVisible()
+    })
 
-  await evidence.step("The count is back to 3 and the button is not pressed", async () => {
-    await expect(retweet).toHaveAttribute("aria-pressed", "false")
-    await expect(retweet).toHaveText("3")
-  })
+    await evidence.step("The server answers with a failure: a message says the retweet was not saved", async () => {
+      release()
+      await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).toBeVisible()
+    })
 
-  await evidence.step("The other tweet was not touched: still retweeted, still 9", async () => {
-    const other = retweetButtonOf(page, neighbour)
-    await expect(other).toHaveAttribute("aria-pressed", "true")
-    await expect(other).toHaveText("9")
-  })
+    await evidence.step("The count is back to 3 and the button is not pressed", async () => {
+      await expect(retweet).toHaveAttribute("aria-pressed", "false")
+      await expect(retweet).toHaveText("3")
+    })
+
+    await evidence.step("The other tweet was not touched: still retweeted, still 9", async () => {
+      const other = retweetButtonOf(page, neighbour)
+      await expect(other).toHaveAttribute("aria-pressed", "true")
+      await expect(other).toHaveText("9")
+    })
+  } finally {
+    // Never leave the held answer pending, even when a step above failed.
+    release()
+  }
 })
