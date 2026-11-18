@@ -11,7 +11,7 @@ Commands run from `src/frontend/`: `pnpm lint`, `pnpm build`, `pnpm test`.
 - Never skip, weaken or delete an e2e test to get green. `forbid: \.(skip|fixme|only)\( in src/frontend/e2e/**`
 - Never click Sign out in an e2e spec that uses the saved sign-in; it ends the session on the server. `forbid: ([Ss]ign.?[Oo]ut.*\.click\(|\.click\(.*[Ss]ign.?[Oo]ut) in src/frontend/e2e/*.spec.ts`
 - Never hardcode the API origin in application code; read it from `VITE_API_URL`.
-- API calls live in `src/frontend/src/queries/<domain>.ts` as plain `fetch` wrapped in `queryOptions(...)`, always with `credentials: "include"`.
+- API calls live in `src/frontend/src/queries/<domain>.ts` as plain `fetch` wrapped in `queryOptions(...)`, always passing `credentials: "include"` on every request.
 - Reuse the primitives in `src/frontend/src/components/ui/` and match neighbouring Tailwind utility patterns; prefer editing existing components over creating new ones or writing custom CSS.
 - When the call to `/__xbot/answer` fails, show a quiet "@xbot is asleep" message; never post a placeholder reply to the shared API.
 - Run `pnpm lint` from `src/frontend/` and fix all ESLint and TypeScript errors it reports. `run: cd src/frontend && pnpm lint`
