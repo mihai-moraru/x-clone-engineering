@@ -1,6 +1,7 @@
 import type { ReactElement } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { vi } from "vitest"
 
 import { TweetCard } from "@/components/tweet-card"
 import { formatHandle } from "@/lib/user"
@@ -83,5 +84,62 @@ describe("TweetCard", () => {
     expect(like.nextElementSibling).toBe(retweet)
     expect(retweet).toHaveAttribute("aria-pressed", "true")
     expect(retweet).toHaveTextContent("2")
+  })
+
+  it("puts a Reply button after the retweet button, with the reply count beside it", () => {
+    renderWithQuery(<TweetCard tweet={{ ...tweet, replyCount: 4 }} />)
+
+    const actions = screen.getByRole("article").querySelector("footer")
+    const retweet = screen.getByRole("button", { name: "Retweet" })
+    const reply = screen.getByRole("button", { name: "Reply" })
+    expect(actions).toContainElement(reply)
+    expect(retweet.nextElementSibling).toBe(reply)
+    expect(reply).toHaveTextContent("4")
+  })
+
+  it("keeps the thread closed until Reply is pressed, and closes it when pressed again", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)))
+    renderWithQuery(<TweetCard tweet={tweet} />)
+    const reply = screen.getByRole("button", { name: "Reply" })
+
+    expect(reply).toHaveAttribute("aria-expanded", "false")
+    expect(fetch).not.toHaveBeenCalled()
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+
+    fireEvent.click(reply)
+    expect(reply).toHaveAttribute("aria-expanded", "true")
+    expect(screen.getByRole("textbox", { name: "Reply to Ada Lovelace" })).toBeInTheDocument()
+    expect(screen.getByRole("article")).toContainElement(screen.getByRole("textbox"))
+    expect(fetch).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(reply)
+    expect(reply).toHaveAttribute("aria-expanded", "false")
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+    vi.unstubAllGlobals()
+  })
+
+  it("shows the thread inside the tweet's own article, under its action row", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)))
+    renderWithQuery(<TweetCard tweet={tweet} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "Reply" }))
+
+    const article = screen.getByRole("article")
+    const thread = screen.getByRole("region", { name: "Replies to Ada Lovelace" })
+    expect(article).toContainElement(thread)
+    expect(article.querySelector("footer")?.nextElementSibling).toBe(thread)
+    expect(screen.getByRole("button", { name: "Reply" })).toHaveAttribute("aria-controls", thread.id)
+    vi.unstubAllGlobals()
+  })
+
+  it("names no button or link with next, more, load or older", () => {
+    vi.stubGlobal("fetch", vi.fn(() => new Promise<Response>(() => undefined)))
+    renderWithQuery(<TweetCard tweet={tweet} />)
+    fireEvent.click(screen.getByRole("button", { name: "Reply" }))
+
+    for (const element of [...screen.getAllByRole("button"), ...screen.queryAllByRole("link")]) {
+      expect(element).not.toHaveAccessibleName(/next|more|load|older/i)
+    }
+    vi.unstubAllGlobals()
   })
 })
