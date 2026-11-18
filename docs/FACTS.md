@@ -3,3 +3,4 @@
 # Project facts
 
 - **f-001** (2026-11-18) - Every worker task is verified against the ## Rules section of AGENTS.md (derived from CLAUDE.md); lint, build and test run as run: rules because the repo has no Makefile check target.
+- **f-002** (2026-11-18) - Skills in .claude/skills/ drive the board through one shared CLI wrapper instead of each skill carrying its own copy of reference/board-api.md.
