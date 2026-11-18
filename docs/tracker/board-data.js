@@ -25,11 +25,11 @@ window.BOARD = {
       "description": "Delivers the core read-and-write loop: a newest-first timeline that keeps loading as the user scrolls, with each tweet showing author, time, text and optional image. Users can also post a short tweet with one optional image and see it at the top straight away.\n\nCovers: R4 timeline, R5 infinite scroll, R6 tweet display, R7 posting with optional image, R8 new tweet appears at top\n\nSource: docs/epics/x-clone-v3-epics.md#epic-2-home-timeline-and-posting",
       "acceptanceCriteria": [],
       "parent": null,
-      "status": "In Progress",
+      "status": "Done",
       "source": "docs/epics/x-clone-v3-epics.md#epic-2-home-timeline-and-posting",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-18T12:17",
-      "updates": 1
+      "updated": "2026-11-18T14:54",
+      "updates": 3
     },
     {
       "key": "XC-3",
@@ -38,11 +38,11 @@ window.BOARD = {
       "description": "Lets users react to other people's tweets with one-tap like and retweet (and one-tap undo), with counts that update immediately, and reply to a tweet with replies shown right under it in the timeline. Together these make up the \"react to others\" part of the core loop.\n\nCovers: R9 like, R10 retweet, R11 instant counts, R12 inline replies, NF1 responsiveness\n\nSource: docs/epics/x-clone-v3-epics.md#epic-3-likes-retweets-and-replies",
       "acceptanceCriteria": [],
       "parent": null,
-      "status": "In Progress",
+      "status": "Done",
       "source": "docs/epics/x-clone-v3-epics.md#epic-3-likes-retweets-and-replies",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-18T13:34",
-      "updates": 1
+      "updated": "2026-11-18T14:54",
+      "updates": 3
     },
     {
       "key": "XC-4",
@@ -589,11 +589,11 @@ window.BOARD = {
         "If the tweet is too long or the image is not allowed, I see a clear message (the length and image limits are Not known yet)."
       ],
       "parent": "XC-2",
-      "status": "In QA",
+      "status": "Done",
       "source": "docs/stories/x-clone-v3-epic-2-stories.md#story-22-post-a-tweet",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-18T13:50",
-      "updates": 6,
+      "updated": "2026-11-18T14:54",
+      "updates": 13,
       "comments": [
         {
           "author": "Claude",
@@ -612,6 +612,78 @@ window.BOARD = {
           "role": "AI Review",
           "created": "2026-11-18T13:50",
           "body": "Review verdict: APPROVE. Code reviewer and accessibility reviewer both approve, nothing blocking. Base reviewed: cc6e86d (worker commit 4fa4101, merged as 55dda49). Full review: docs/reviews/xc-9-review.md\n\nCriteria -> tests: AC1 ok, AC2 ok, AC3 ok, AC4 ok.\n\nNon-blocking (code)\n- e2e/xc-9.spec.ts:204-206: settle() resolves at once when the page was already idle, so the \"nothing was sent\" and \"no second timeline request\" reads are saved only because the call lists are cumulative; add a short quiet wait before the last reads.\n- e2e/xc-9.spec.ts:389-392: Enter and Ctrl/Meta+Enter in a textarea do not submit a form, so only requestSubmit() tests the guard; the caption oversells it.\n- e2e/xc-9.spec.ts:558-560: the contract test checks the content and mediaKeys properties exist, not the schema's required list.\n- lib/compose.ts:25: \"1 characters over\" is ungrammatical (cosmetic).\n- tweet-composer.tsx: the hidden file input and \"Add image\" are two tab stops for one action (deliberate).\n- NF1: the new tweet shows after the upload and create calls return, with \"Posting...\" meanwhile; it is not an optimistic insert.\n\nNon-blocking (accessibility)\n- tweet-composer.tsx:110: the error messages and the count are not tied to the textarea with aria-describedby.\n- tweet-composer.tsx:188, :55, :169: focus is lost when Post disables; return it to the textarea.\n- tweet-composer.tsx:55: a successful post is not announced (add a hidden role=\"status\").\n- tweet-composer.tsx:140: the over-limit alert changes with every keystroke, so a screen reader repeats it.\n- tweet-composer.tsx:157: the hidden file input's focus ring is ring-ring/50, probably under 3:1 in light mode.\n- tweet-composer.tsx:134,173: the icons may lack aria-hidden.\n- e2e/xc-9.spec.ts:236: posting is only tested with a mouse click; add a Tab to Post and Enter step.\n\nNote for QA: the limits are the API's documented ones because the story says \"Not known yet\"; the product owner should record them. The spec has two extra tests that are not criteria (\"the first tweet replaces the empty timeline message\" and a read-only contract test). The spec serves /api/tweets and /api/upload from the test, so the videos show served data and nothing is posted from the person's account."
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:48",
+          "body": "AC1 - I can type a tweet and post it, with or without one image: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-9/ac1.webm",
+              "label": "AC1",
+              "ac": 1,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:48",
+          "body": "AC2 - My new tweet appears at the top of my timeline straight away: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-9/ac2.webm",
+              "label": "AC2",
+              "ac": 2,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:48",
+          "body": "AC3 - I cannot post an empty tweet: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-9/ac3.webm",
+              "label": "AC3",
+              "ac": 3,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:48",
+          "body": "AC4 - If the tweet is too long or the image is not allowed, I see a clear message (the length and image limits are Not known yet): pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-9/ac4.webm",
+              "label": "AC4",
+              "ac": 4,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:48",
+          "body": "QA summary (evidence run on main at 049498e, pnpm e2e:evidence e2e/xc-9.spec.ts: 6 of 6 passed)\n\n- AC1 - I can type a tweet and post it, with or without one image: pass\n- AC2 - My new tweet appears at the top of my timeline straight away: pass\n- AC3 - I cannot post an empty tweet: pass\n- AC4 - If the tweet is too long or the image is not allowed, I see a clear message (the length and image limits are Not known yet): pass\n\nThe run was done twice: the first attempt crashed the browser before AC1 started (\"browserContext.newPage: Target crashed\", a 1.6 KB video, AC2 to AC4 passed), so AC1 was re-run with the whole spec. The videos posted are from the second run, where all six tests passed. Nothing was changed between the runs.\n\nRead the videos with this in mind\n- The API is served by the test: /api/timeline, POST /api/tweets and POST /api/upload are answered with page.route. Nothing is posted from your account, so the videos show served data, and a tweet you see being posted in them is not on the shared API.\n- The limits the story calls \"Not known yet\" are the API's documented ones: 280 characters after trimming; JPEG, PNG, GIF or WebP; 5 MB. The product owner should record them on the ticket.\n- Two extra tests that are not criteria also passed: \"the first tweet replaces the empty timeline message\", and a read-only \"contract\" test that reads the API's documented limits and fields. Their videos are not posted.\n- Not exercised: the real upload and the real tweet endpoints, because the spec never writes to the shared API.\n\nRe-run the evidence: pnpm e2e:evidence e2e/xc-9.spec.ts"
+        },
+        {
+          "author": "Mihai",
+          "role": "PO",
+          "created": "2026-11-18T14:54",
+          "body": "PO Mihai: In Acceptance → Done"
         }
       ]
     },
@@ -626,11 +698,11 @@ window.BOARD = {
         "If saving my like fails, the count goes back to what it was and I see a message."
       ],
       "parent": "XC-3",
-      "status": "In QA",
+      "status": "Done",
       "source": "docs/stories/x-clone-v3-epic-3-stories.md#story-31-like-and-unlike-a-tweet",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-18T13:50",
-      "updates": 9,
+      "updated": "2026-11-18T14:54",
+      "updates": 15,
       "comments": [
         {
           "author": "Claude",
@@ -661,6 +733,63 @@ window.BOARD = {
           "role": "AI Review",
           "created": "2026-11-18T13:50",
           "body": "Review verdict (round 2): APPROVE. Code reviewer and accessibility reviewer both approve, nothing blocking. Round 1's blocker is fixed. Base reviewed: 159502f (source: cc6e86d; spec as of 97e1648). Full review: docs/reviews/xc-10-review.md\n\nCriteria -> tests: AC1 ok, AC2 ok, AC3 ok (was weak). AC3 now fails if the optimistic update is missing and fails if the rollback is missing.\n\nNon-blocking\n- e2e/xc-10.spec.ts:14: the header comment still says AC3 answers 500 at once; AC2 and AC3 both hold their answers now.\n- e2e/xc-10.spec.ts:217-222: the AC2 step \"The answer arrives: nothing jumps\" re-asserts what was already true and passes before the answer is processed; wait for the POST response as AC1 does. The criterion is met by the held-answer steps.\n- like-button.tsx:36: rose-600 on a light grey hover background could be about 4.3:1; rose-700 is safer.\n- like-button.tsx:44: the count change is not announced (the pressed state is).\n- use-optimistic-toggle.ts:152: the failure toast is not checked for announcement.\n- like-button.test.tsx:156 and :76: the \"keyboard\" test only calls focus() and a click, and nothing checks the icon's aria-hidden.\n- Still open from round 1, not blocking: cancelQueries cancelling an in-flight \"load more\" page; the hook patching only the home timeline cache; check in a browser that the filled heart draws and the hover contrast, in both themes."
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:50",
+          "body": "AC1 - Tapping like once likes the tweet; tapping again removes my like: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-10/ac1.webm",
+              "label": "AC1",
+              "ac": 1,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:50",
+          "body": "AC2 - The like count and the button state update immediately, even on a slow connection: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-10/ac2.webm",
+              "label": "AC2",
+              "ac": 2,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:50",
+          "body": "AC3 - If saving my like fails, the count goes back to what it was and I see a message: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-10/ac3.webm",
+              "label": "AC3",
+              "ac": 3,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:50",
+          "body": "QA summary (evidence run on main at 049498e, pnpm e2e:evidence e2e/xc-10.spec.ts, run once: 3 of 3 passed)\n\n- AC1 - Tapping like once likes the tweet; tapping again removes my like: pass\n- AC2 - The like count and the button state update immediately, even on a slow connection: pass\n- AC3 - If saving my like fails, the count goes back to what it was and I see a message: pass\n\nThis is the run after the review send-back. AC3 now holds the failing answer, so its video shows the heart pressed with 4 likes while the save is still failing, then the message \"Couldn't save your like. Try again.\", then the count back to 3 and the heart not pressed. AC2 holds its answer the same way, so its video shows the new state before any answer arrives.\n\nRead the videos with this in mind\n- The API is served by the test: /api/timeline and the like endpoints are answered with page.route, and the \"slow connection\" and the failure are made by the test holding or failing the answer. Nothing is liked from your account, so the videos show served data, not your real likes.\n- Not exercised: the real like endpoints, and the look of the heart and its hover colour in light and dark mode (the review asked for one look in a browser at the filled heart and the contrast).\n\nRe-run the evidence: pnpm e2e:evidence e2e/xc-10.spec.ts"
+        },
+        {
+          "author": "Mihai",
+          "role": "PO",
+          "created": "2026-11-18T14:54",
+          "body": "PO Mihai: In Acceptance → Done"
         }
       ]
     },
@@ -675,17 +804,86 @@ window.BOARD = {
         "If saving my retweet fails, the count goes back to what it was and I see a message."
       ],
       "parent": "XC-3",
-      "status": "In Progress",
+      "status": "Done",
       "source": "docs/stories/x-clone-v3-epic-3-stories.md#story-32-retweet-and-undo-a-retweet",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-18T13:48",
-      "updates": 2,
+      "updated": "2026-11-18T14:54",
+      "updates": 12,
       "comments": [
         {
           "author": "Claude",
           "role": "AI Dev",
           "created": "2026-11-18T13:48",
           "body": "Started from 55dda49. Built by morch worker t-20261118-9004 (commit 50e9c06), merged to main as 8211b62. The ticket stays In Progress, not In Review, on purpose: the same blocking weakness the XC-10 review found is in this spec. AC3 (xc-11.spec.ts, about :222-252) answers the failing save with a 500 at once, so it cannot tell a rollback from \"nothing changed\", and the AC1 step \"It stays retweeted once the answer has come back\" does not wait for the answer. A test-only fix is being built by morch worker t-20261118-3a0e. When it is merged this ticket goes to In Review.\n\nState of the app code: the RetweetButton reuses the generic hook unchanged. On main, tsc, lint, pnpm test (75) and pnpm e2e (27, including the three XC-11 tests) pass."
+        },
+        {
+          "author": "Claude",
+          "role": "AI Dev",
+          "created": "2026-11-18T14:40",
+          "body": "Ready for review. Built by morch worker t-20261118-9004 (commit 50e9c06, merged as 8211b62); a follow-up test-only fix by worker t-20261118-3a0e (commit 4006711, merged as b31c705). Not built by /implement-story. Change set: git diff 55dda49..8211b62 -- src/frontend, plus the spec as of b31c705 (git diff 8211b62..b31c705 -- src/frontend/e2e/xc-11.spec.ts).\n\nFiles changed (all new unless noted)\n- src/frontend/src/queries/retweets.ts: retweetTweet (POST) and unretweetTweet (DELETE) on /api/tweets/{id}/retweet, plain fetch, credentials \"include\", relative URL.\n- src/frontend/src/components/retweet-button.tsx: a toggle button, name \"Retweet\", aria-pressed, the count as its description; the retweeted state is a heavier icon stroke and a semibold count as well as green.\n- src/frontend/src/components/tweet-card.tsx (changed): the button sits after the like button in the action row.\n- src/frontend/src/hooks/use-optimistic-toggle.ts is unchanged; the button passes its own fields, fetchers and message.\n- Tests: retweet-button.test.tsx (9), tweet-card.test.tsx (changed, one test added), e2e/xc-11.spec.ts (AC1 to AC3).\n\nThe weakness the XC-10 review found was in this spec too, and is fixed before review: AC3 now holds the failing answer and asserts pressed and \"4\" before the failure, then the message, count \"3\" and not pressed; the AC1 step \"It stays retweeted once the answer has come back\" waits for the POST response.\n\nChecks, from src/frontend, on main at 049498e: tsc pass, lint pass, pnpm test pass (105), pnpm build pass, pnpm e2e pass (30: smoke, XC-5 to XC-12). The XC-11 spec ran for the first time in the main checkout.\n\nDecisions made without asking\n1. A retweet adds no tweet to the timeline in this story; only the count and the button change.\n2. The retweeted state is green with a heavier icon and a semibold count (a repost icon has no natural filled form). Is that distinct enough?\n3. The spec serves /api/timeline and the retweet endpoints with page.route; nothing is written to the shared API and nothing is retweeted from the person's account. The videos show served data.\n4. A retweet of a tweet that has left the cached timeline is skipped optimistically (as for likes).\n\nNot checked in a browser: the green colour, the stroke weight and the alignment, in light and dark mode."
+        },
+        {
+          "author": "Claude",
+          "role": "AI Review",
+          "created": "2026-11-18T14:42",
+          "body": "Review verdict: APPROVE. Code reviewer and accessibility reviewer both approve, nothing blocking. Base reviewed: 55dda49 (source 50e9c06 merged as 8211b62, plus the spec as of 4006711 merged as b31c705). Full review: docs/reviews/xc-11-review.md\n\nCriteria -> tests: AC1 ok, AC2 ok, AC3 ok. AC3 shows the optimistic state (pressed, 4) while the failing answer is held, then the message, then count 3 and not pressed.\n\nNon-blocking (code)\n- e2e/xc-11.spec.ts AC2: the step \"The answer arrives: nothing jumps\" re-asserts what was already true and passes before the answer is processed; wait for the POST response as AC1 does. The step before it repeats the same assertions.\n- e2e/xc-11.spec.ts AC1: retweetSaved is created before the tap and awaited in the next step; if the tap fails first the promise can reject unobserved (noise on a failing run).\n- use-optimistic-toggle.ts was not in the diff (unchanged, from XC-10), so it was not reviewed here.\n\nNon-blocking (accessibility)\n- retweet-button.tsx:42: emerald-600 on white is about 3.8:1 in light mode (target 4.5:1) and is a fixed palette colour; consider emerald-700. State is also shown by the icon stroke, a semibold count and aria-pressed, so colour is not the only signal.\n- retweet-button.test.tsx:207: the keyboard test only calls focus() and a click.\n- retweet-button.tsx:44: the count change is not announced."
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:52",
+          "body": "AC1 - Tapping retweet once retweets the tweet; tapping again undoes it: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-11/ac1.webm",
+              "label": "AC1",
+              "ac": 1,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:52",
+          "body": "AC2 - The retweet count and the button state update immediately, even on a slow connection: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-11/ac2.webm",
+              "label": "AC2",
+              "ac": 2,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:52",
+          "body": "AC3 - If saving my retweet fails, the count goes back to what it was and I see a message: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-11/ac3.webm",
+              "label": "AC3",
+              "ac": 3,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:52",
+          "body": "QA summary (evidence run on main at 049498e, pnpm e2e:evidence e2e/xc-11.spec.ts, run once: 3 of 3 passed)\n\n- AC1 - Tapping retweet once retweets the tweet; tapping again undoes it: pass\n- AC2 - The retweet count and the button state update immediately, even on a slow connection: pass\n- AC3 - If saving my retweet fails, the count goes back to what it was and I see a message: pass\n\nAC2 and AC3 hold the answer in the test, so the AC3 video shows the retweet button pressed with 4 while the save is still failing, then the message \"Couldn't save your retweet. Try again.\", then the count back to 3 and the button not pressed. This is the same fix the XC-10 review asked for, applied before this ticket's review.\n\nRead the videos with this in mind\n- The API is served by the test: /api/timeline and the retweet endpoints are answered with page.route, and the slow connection and the failure are made by the test. Nothing is retweeted from your account, so the videos show served data, not your real retweets.\n- Not exercised: the real retweet endpoints, and the look of the retweet button in light and dark mode. The review noted its light-mode green is about 3.8:1 on white (target 4.5:1); the retweeted state is also a heavier icon stroke and a semibold count, so it is not colour alone.\n\nRe-run the evidence: pnpm e2e:evidence e2e/xc-11.spec.ts"
+        },
+        {
+          "author": "Mihai",
+          "role": "PO",
+          "created": "2026-11-18T14:54",
+          "body": "PO Mihai: In Acceptance → Done"
         }
       ]
     },
@@ -700,11 +898,88 @@ window.BOARD = {
         "I cannot post an empty reply."
       ],
       "parent": "XC-3",
-      "status": "New",
+      "status": "Done",
       "source": "docs/stories/x-clone-v3-epic-3-stories.md#story-33-reply-to-a-tweet-inline",
       "created": "2026-11-12T10:00",
-      "updated": "2026-11-12T10:00",
-      "updates": 0
+      "updated": "2026-11-18T14:54",
+      "updates": 12,
+      "comments": [
+        {
+          "author": "Claude",
+          "role": "AI Dev",
+          "created": "2026-11-18T14:40",
+          "body": "Started from 8211b62. Built by morch worker t-20261118-cae0 (commit cf1c17c), merged to main as 049498e. Its change set is git diff b31c705..049498e -- src/frontend."
+        },
+        {
+          "author": "Claude",
+          "role": "AI Dev",
+          "created": "2026-11-18T14:40",
+          "body": "Ready for review. Commit cf1c17c, merged to main as 049498e. Change set: git diff b31c705..049498e -- src/frontend. Built by a morch worker in its own worktree, not by /implement-story.\n\nFiles changed (all new unless noted)\n- src/frontend/src/queries/replies.ts: fetchReplies (GET /api/tweets/{id}/replies, 404 gives a quiet \"not available\" state), repliesQueryOptions (key [\"replies\", id], no retry), createReply (POST /api/tweets with { content, parentTweetId }), recordReply (appends the reply to the thread and adds one to that tweet's replyCount in the timeline cache, with no timeline refetch).\n- src/frontend/src/components/reply-thread.tsx: the thread inside the tweet's article: loading status, the replies oldest first, \"No replies yet.\", the 404 message, \"Couldn't load the replies.\" with Try again, and a form (textarea \"Reply to <author>\", \"Post reply\"). It reuses validateTweetText from lib/compose.ts.\n- src/frontend/src/components/tweet-card.tsx (changed): a \"Reply\" button with the count after the retweet button, aria-expanded, closed by default.\n- Tests: reply-thread.test.tsx (26), tweet-card.test.tsx (changed, 4 added), e2e/xc-12.spec.ts (AC1 to AC3).\n\nChecks\n- Worker, in its worktree: tsc pass, lint pass, pnpm test pass (105), pnpm build pass.\n- morch verification: gates pass, 5 rules checked and passing, reviewer model approved.\n- Main checkout at 049498e, from src/frontend: tsc pass, lint pass, pnpm test pass (105), pnpm build pass, pnpm e2e pass (30: smoke, XC-5 to XC-12). The worker could not run e2e, so this is the first run of xc-12.spec.ts.\n\nDecisions made without asking\n1. The form is hidden when the replies GET returns 404 (the tweet is not the caller's or a followee's): the API would not show the reply either, so only a quiet message shows.\n2. The reply count and the new reply appear after the POST returns 201, not optimistically.\n3. A 4xx shows the API's own error text, which may be terse; a network failure or 5xx shows \"Couldn't post your reply. Try again.\" and keeps the draft.\n4. Wording chosen where the story gave none: \"No replies yet.\", the placeholder \"Post your reply\", \"Couldn't load the replies.\".\n5. Replies are cached under [\"replies\", id] with the default 5 minute staleTime: a reply by someone else shows after the cache goes stale or on a reload.\n6. The spec serves the timeline, the replies GET and POST /api/tweets with page.route; nothing is written to the shared API. The videos show served data.\n\nFor the reviewer\n- reply-thread.tsx and recordReply in queries/replies.ts (the cache logic) first.\n- The e2e covers only the happy paths; 404, 4xx, 5xx and the over-limit alert are covered by Vitest only.\n- Not checked in a browser: the sky colour of the Reply button and the layout of the thread, in light and dark mode."
+        },
+        {
+          "author": "Claude",
+          "role": "AI Review",
+          "created": "2026-11-18T14:43",
+          "body": "Review verdict: APPROVE. Code reviewer and accessibility reviewer both approve, nothing blocking. Base reviewed: b31c705 (worker commit cf1c17c, merged as 049498e). Full review: docs/reviews/xc-12-review.md\n\nCriteria -> tests: AC1 ok, AC2 ok, AC3 ok.\n\nNon-blocking (code)\n- e2e/xc-12.spec.ts:19-21, :97: the timeline, the replies GET and the POST are all served by page.route, so a wrong field name such as parentTweetId would pass everywhere. QA or the person should post one real reply with their own account on the dev server to confirm the live API takes it.\n- e2e/xc-12.spec.ts:328-334: the AC3 \"some other way\" step never asserts posts is empty (the final exact equality still catches it).\n- e2e/xc-12.spec.ts AC2: \"directly under\" is checked as \"inside the tweet's article\"; the order is checked only in tweet-card.test.tsx. The time checks allow about a minute of drift.\n- reply-thread.test.tsx:236: the test \"allows exactly 280 characters and sends them\" never sends anything.\n- tweet-card.test.tsx:118,132,143: vi.unstubAllGlobals() should move to afterEach.\n- queries/replies.ts:112-115: recordReply cancels the whole timeline query, dropping a next-page fetch in flight (rare).\n- reply-thread.tsx:133: a 404 on the replies GET hides the form; a design choice the story does not mention.\n- Nothing touches @xbot, so a reply that mentions @xbot gets no answer from this change; the product owner may want to know.\n- NF2: the e2e runs at desktop width only.\n\nNon-blocking (accessibility)\n- reply-thread.tsx:135-149: the error alerts are not tied to the textarea with aria-describedby.\n- reply-thread.tsx:154: focus is lost after a successful post (Post reply stays disabled); move it to the textarea.\n- reply-thread.tsx:99-124: a posted reply, the rising count and the empty and 404 messages are not announced.\n- tweet-card.tsx:67: the Reply button's sky-600 text is about 4.1:1 on white; use sky-700.\n- reply-thread.tsx:124: add role=\"list\" to the ul for VoiceOver.\n\nNote for QA: the spec serves the timeline, the replies GET and POST /api/tweets from the test, so the videos show served data and nothing is posted from the person's account."
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:53",
+          "body": "AC1 - I can write a reply to a tweet from the timeline: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-12/ac1.webm",
+              "label": "AC1",
+              "ac": 1,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:53",
+          "body": "AC2 - Replies appear directly under that tweet in the timeline, without opening a separate page: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-12/ac2.webm",
+              "label": "AC2",
+              "ac": 2,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:53",
+          "body": "AC3 - I cannot post an empty reply: pass",
+          "attachments": [
+            {
+              "type": "video",
+              "path": "docs/qa/XC-12/ac3.webm",
+              "label": "AC3",
+              "ac": 3,
+              "result": "pass"
+            }
+          ]
+        },
+        {
+          "author": "Claude",
+          "role": "AI QA",
+          "created": "2026-11-18T14:53",
+          "body": "QA summary (evidence run on main at 049498e, pnpm e2e:evidence e2e/xc-12.spec.ts, run once: 3 of 3 passed)\n\n- AC1 - I can write a reply to a tweet from the timeline: pass\n- AC2 - Replies appear directly under that tweet in the timeline, without opening a separate page: pass\n- AC3 - I cannot post an empty reply: pass\n\nRead the videos with this in mind\n- The API is served by the test: /api/timeline, GET /api/tweets/{id}/replies and POST /api/tweets are answered with page.route. Nothing is posted from your account, so the videos show served data, and a reply you see being posted in them is not on the shared API.\n- NOT confirmed against the live API: that POST /api/tweets accepts the field name parentTweetId and makes a single-level reply. The spec and the unit tests assert the request body { content, parentTweetId } against the same assumption, so a wrong field name would pass everywhere. The code review asked for one real reply, posted with your own account on the dev server, to confirm it. I have not done that: it writes to the shared API as you.\n- Not covered by a video: the 404 case (the form is hidden and a quiet message shows), the API refusing a reply, the over-280 alert and the failed-load message; these are covered by unit tests only.\n- A reply that mentions @xbot gets no answer from this change; @xbot is a separate feature and not part of the XC-12 criteria.\n\nRe-run the evidence: pnpm e2e:evidence e2e/xc-12.spec.ts"
+        },
+        {
+          "author": "Mihai",
+          "role": "PO",
+          "created": "2026-11-18T14:54",
+          "body": "PO Mihai: In Acceptance → Done"
+        }
+      ]
     },
     {
       "key": "XC-13",
