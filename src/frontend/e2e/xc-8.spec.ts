@@ -157,16 +157,17 @@ test("AC2: more tweets load automatically as I scroll, with no next page button"
     await expect(page.getByRole("link", { name: /next|more|load|older/i })).toHaveCount(0)
   })
 
-  await evidence.step("Scroll down: the next tweets load by themselves", async () => {
-    await tweets.last().scrollIntoViewIfNeeded()
-    await page.mouse.wheel(0, 4000)
+  // Each scroll goes only as far as the last tweet loaded so far. Scrolling past it would be
+  // fine for a reader, but the next page lands under the viewport again and loads too, and the
+  // test could no longer tell one automatic load from two.
+  await evidence.step("Scroll down to the last tweet: the next tweets load by themselves", async () => {
+    await tweets.nth(PAGE_SIZE - 1).scrollIntoViewIfNeeded()
     await expect(tweets).toHaveCount(PAGE_SIZE * 2)
     expect(laterPages).toHaveLength(1)
   })
 
   await evidence.step("Scroll down again: the rest load, down to the oldest tweet", async () => {
-    await tweets.last().scrollIntoViewIfNeeded()
-    await page.mouse.wheel(0, 4000)
+    await tweets.nth(PAGE_SIZE * 2 - 1).scrollIntoViewIfNeeded()
     await expect(tweets).toHaveCount(total)
     await tweetNumber(1).scrollIntoViewIfNeeded()
     await expect(tweetNumber(1)).toBeVisible()
@@ -185,6 +186,7 @@ test("AC2: more tweets load automatically as I scroll, with no next page button"
 test("AC3: each tweet shows the author's name and handle, when it was posted, the text, and the image", async ({
   page,
   context,
+  browser,
   playwright,
   baseURL,
   evidence,
@@ -193,15 +195,16 @@ test("AC3: each tweet shows the author's name and handle, when it was posted, th
   const author = await createAccount(playwright, baseURL, "Author")
   const run = randomUUID().slice(0, 8)
 
-  // A real picture to attach: a screenshot of a coloured card, drawn in a spare tab.
-  const spare = await context.newPage()
-  await spare.setViewportSize({ width: 480, height: 270 })
+  // A real picture to attach: a screenshot of a coloured card, drawn in a separate, unrecorded
+  // browser context so that the test's only video is the one of the timeline.
+  const studio = await browser.newContext({ viewport: { width: 480, height: 270 } })
+  const spare = await studio.newPage()
   await spare.setContent(
     `<body style="margin:0;display:grid;place-items:center;height:100vh;background:#1d9bf0;color:#fff;` +
       `font:700 40px system-ui">XC-8 picture</body>`
   )
   const picture = await spare.screenshot({ type: "png" })
-  await spare.close()
+  await studio.close()
 
   const upload = await author.api.post("/api/upload", {
     multipart: { files: { name: "picture.png", mimeType: "image/png", buffer: picture } },
@@ -286,8 +289,10 @@ test("AC4: with no tweets yet I see a simple empty message", async ({
   })
 
   await evidence.step("Nothing else stands in for it: no error and no endless loading", async () => {
-    await expect(page.getByRole("alert")).toHaveCount(0)
-    await expect(page.getByText(/loading/i)).toHaveCount(0)
+    // Scoped to the page's own content: the evidence caption for this step says "loading" too.
+    const content = page.getByRole("main")
+    await expect(content.getByRole("alert")).toHaveCount(0)
+    await expect(content.getByText(/loading/i)).toHaveCount(0)
   })
 
   await dispose(viewer)
