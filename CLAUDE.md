@@ -109,3 +109,8 @@ src/frontend/src/
 - `pnpm e2e:login` — save your sign-in for the end-to-end tests (once)
 - `pnpm e2e [spec]` — end-to-end tests, fast (`verify`)
 - `pnpm e2e:evidence [spec]` — end-to-end tests at human pace, with a video per test
+
+## Workflow
+
+- Run `pnpm lint` and fix any TypeScript errors before considering any task complete, and prefer
+  editing existing components over creating new ones.
