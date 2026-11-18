@@ -72,4 +72,16 @@ describe("TweetCard", () => {
     expect(actions).not.toBeNull()
     expect(actions).toContainElement(screen.getByRole("button", { name: "Like" }))
   })
+
+  it("puts the retweet button next to the like button in the action row, with its count", () => {
+    renderWithQuery(<TweetCard tweet={{ ...tweet, retweetCount: 2, retweetedByMe: true }} />)
+
+    const actions = screen.getByRole("article").querySelector("footer")
+    const like = screen.getByRole("button", { name: "Like" })
+    const retweet = screen.getByRole("button", { name: "Retweet" })
+    expect(actions).toContainElement(retweet)
+    expect(like.nextElementSibling).toBe(retweet)
+    expect(retweet).toHaveAttribute("aria-pressed", "true")
+    expect(retweet).toHaveTextContent("2")
+  })
 })

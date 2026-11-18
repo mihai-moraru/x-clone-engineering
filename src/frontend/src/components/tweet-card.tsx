@@ -1,4 +1,5 @@
 import { LikeButton } from "@/components/like-button"
+import { RetweetButton } from "@/components/retweet-button"
 import { formatRelativeTime } from "@/lib/format-relative-time"
 import { formatHandle } from "@/lib/user"
 import type { Tweet } from "@/queries/tweets"
@@ -39,9 +40,10 @@ export function TweetCard({ tweet }: { tweet: Tweet }) {
           className="max-h-[510px] w-full rounded-lg border border-border object-cover"
         />
       ) : null}
-      {/* The action row: the like button now, retweet (XC-11) and reply (XC-12) will sit beside it. */}
+      {/* The action row: like and retweet now, reply (XC-12) will sit beside them. */}
       <footer className="-ml-2.5 flex items-center gap-4">
         <LikeButton tweet={tweet} />
+        <RetweetButton tweet={tweet} />
       </footer>
     </article>
   )
