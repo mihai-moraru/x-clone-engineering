@@ -1,4 +1,4 @@
-import type { Locator, Page, Route } from "@playwright/test"
+import type { Locator, Page, Response as PlaywrightResponse, Route } from "@playwright/test"
 
 import { expect, test } from "./fixtures"
 
@@ -138,14 +138,21 @@ test("AC1: tapping like once likes the tweet; tapping again removes my like", as
     expect(calls).toEqual([])
   })
 
+  let likeSaved: Promise<PlaywrightResponse> | undefined
+
   await evidence.step("Tap like once: the tweet is liked and has 4 likes", async () => {
+    // Start listening for the answer before the tap, so the next step can wait for it.
+    likeSaved = page.waitForResponse(
+      (response) => response.url().includes("/like") && response.request().method() === "POST"
+    )
     await like.click()
     await expect(like).toHaveAttribute("aria-pressed", "true")
     await expect(like).toHaveText("4")
     await expect.poll(() => calls).toEqual([{ method: "POST", tweetId: TWEET_ID }])
   })
 
-  await evidence.step("It stays liked once the answer has come back", async () => {
+  await evidence.step("Once the server has saved the like, it stays liked with 4 likes", async () => {
+    await likeSaved
     await expect(like).toHaveAttribute("aria-pressed", "true")
     await expect(like).toHaveText("4")
   })
@@ -221,32 +228,50 @@ test("AC2: the like count and the button state update immediately, even on a slo
 
 test("AC3: if saving my like fails, the count goes back and I see a message", async ({ page, evidence }) => {
   await serveTimeline(page, [target, neighbour])
-  // Saving fails: the server answers 500.
+  // Saving fails: the server answers 500, but the failing answer is held back until the test lets it go.
+  let release: () => void = () => undefined
+  const held = new Promise<void>((resolve) => {
+    release = resolve
+  })
   const { calls } = await serveLikes(page, [target, neighbour], async (route) => {
+    await held
     await route.fulfill({ status: 500, json: { error: "Internal Server Error" } })
   })
   const like = likeButtonOf(page, target)
 
-  await evidence.step("Open the home timeline: the tweet has 3 likes and I have not liked it", async () => {
-    await openTimeline(page)
-    await expect(like).toHaveAttribute("aria-pressed", "false")
-    await expect(like).toHaveText("3")
-  })
+  try {
+    await evidence.step("Open the home timeline: the tweet has 3 likes and I have not liked it", async () => {
+      await openTimeline(page)
+      await expect(like).toHaveAttribute("aria-pressed", "false")
+      await expect(like).toHaveText("3")
+    })
 
-  await evidence.step("Tap like while the server is failing: a message says it was not saved", async () => {
-    await like.click()
-    await expect.poll(() => calls).toEqual([{ method: "POST", tweetId: TWEET_ID }])
-    await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).toBeVisible()
-  })
+    await evidence.step("Tap like while the server is failing: it shows as liked with 4 before the answer", async () => {
+      await like.click()
+      // The request has been sent and its failing answer is held in this test.
+      await expect.poll(() => calls).toEqual([{ method: "POST", tweetId: TWEET_ID }])
+      await expect(like).toHaveAttribute("aria-pressed", "true")
+      await expect(like).toHaveText("4")
+      await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).not.toBeVisible()
+    })
 
-  await evidence.step("The count is back to 3 and the heart is not pressed", async () => {
-    await expect(like).toHaveAttribute("aria-pressed", "false")
-    await expect(like).toHaveText("3")
-  })
+    await evidence.step("The server answers with a failure: a message says the like was not saved", async () => {
+      release()
+      await expect(page.getByText(FAILURE_MESSAGE, { exact: true })).toBeVisible()
+    })
 
-  await evidence.step("The other tweet was not touched: still liked, still 9", async () => {
-    const other = likeButtonOf(page, neighbour)
-    await expect(other).toHaveAttribute("aria-pressed", "true")
-    await expect(other).toHaveText("9")
-  })
+    await evidence.step("The count is back to 3 and the heart is not pressed", async () => {
+      await expect(like).toHaveAttribute("aria-pressed", "false")
+      await expect(like).toHaveText("3")
+    })
+
+    await evidence.step("The other tweet was not touched: still liked, still 9", async () => {
+      const other = likeButtonOf(page, neighbour)
+      await expect(other).toHaveAttribute("aria-pressed", "true")
+      await expect(other).toHaveText("9")
+    })
+  } finally {
+    // Never leave the held answer pending, even when a step above failed.
+    release()
+  }
 })
